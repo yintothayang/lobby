@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "mocha --require ts-node/register -r tsconfig-paths/register -r source-map-support/register --recursive \"./test/**/*.spec.ts\""
+    "test": "mocha --require ts-node/register -r tsconfig-paths/register -r source-map-support/register --recursive \"./test/**/server.spec.ts\""
   },
   "keywords": [],
   "author": "",
@@ -15,6 +15,7 @@
     "@types/node": "^12.0.8",
     "@types/puppeteer": "^1.12.4",
     "@types/webrtc": "0.0.25",
+    "@types/ws": "^6.0.1",
     "chai": "^4.2.0",
     "mocha": "^6.1.4",
     "puppeteer": "^1.17.0",
@@ -26,6 +27,7 @@
   },
   "dependencies": {
     "socket.io": "^2.2.0",
-    "socket.io-client": "^2.2.0"
+    "socket.io-client": "^2.2.0",
+    "ws": "^7.0.1"
   }
 }
