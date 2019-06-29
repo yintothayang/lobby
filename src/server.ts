@@ -10,7 +10,6 @@ export default class Server {
   }
 
   start(cb?){
-    console.log("start")
     this.wss = new WebSocket.Server({
       port: this.port
     }, cb)
@@ -26,7 +25,8 @@ export default class Server {
 
   onConnection(client){
     console.log('onConnection')
-    client.onMessage = this.onMessage.bind(this)
+    client.on('message', this.onMessage.bind(this))
+    // client.send("hey client")
   }
 
   onError(e){
@@ -37,7 +37,6 @@ export default class Server {
     console.log("onClose: ", e)
   }
 
-  // Client
   onMessage(e){
     console.log("onMessage: ", e)
   }

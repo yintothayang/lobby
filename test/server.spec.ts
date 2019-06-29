@@ -1,33 +1,31 @@
 import { assert } from 'chai'
 import * as puppeteer from 'puppeteer'
 import Server from '../src/server'
+import Client from '../src/client'
 
-const port = 8080
+const port = 5555
+const url = "ws://localhost:" + port
 const server = new Server(port)
 
 describe('Server', async() => {
 
   it("should work", async() => {
     await server.start()
-    console.log(server.wss.address())
 
-    let browser = await puppeteer.launch({ headless: false })
-    let page = await browser.newPage()
+    const browser = await puppeteer.launch({ headless: false })
+    const page = await browser.newPage()
 
-    await page.evaluate((port) => {
+    let res = await page.evaluate((Client) => {
+      eval("Client = " + Client)
 
-      const url = "ws://localhost:"+port
-      console.log("setup", url)
+      const url = "ws://localhost:5555"
+      let client = new Client(url)
 
-      // @ts-ignore
-      var soc = new WebSocket(url)
+      client.start()
 
-      console.log(soc)
+    }, Client.toString())
 
-
-    }, port)
-
-    // await browser.close()
+    await browser.close()
     assert.equal(true, true)
   })
 })

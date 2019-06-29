@@ -1,24 +1,34 @@
-export default class LudicClient {
-  port: number
-  constructor(port: number = 3001){
-    this.port = port
+export default class Client {
+  url: string
+  ws: any
+
+  constructor(url: string){
+    this.url = url
   }
 
-  bind(socket){
-
+  start(){
+    // @ts-ignore
+    this.ws = new WebSocket(this.url)
+    this.ws.onclose = this.onClose.bind(this)
+    this.ws.onerror = this.onError.bind(this)
+    this.ws.onmessage = this.onMessage.bind(this)
+    this.ws.onopen = this.onOpen.bind(this)
   }
 
-  onConnect(e){
-
+  onClose(e){
+    console.log("client.onClose", e)
   }
 
-  onEvent(e){
-
+  onError(e){
+    console.log("client.onError", e)
   }
 
-  onDisconnect(e){
-
+  onMessage(e){
+    console.log("client.onMessage", e)
   }
 
-
+  onOpen(e){
+    console.log("client.onOpen", e)
+    // this.ws.send({message: "hey server"})
+  }
 }

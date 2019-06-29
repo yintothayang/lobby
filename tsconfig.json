@@ -17,6 +17,7 @@
       "chai",
       "webrtc",
       "puppeteer",
+      "websocket"
     ],
     "skipLibCheck": true,
     "paths": {
