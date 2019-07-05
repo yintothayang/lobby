@@ -1,4 +1,4 @@
-
+.serverless/
 node_modules/
 dist/*.js
 dist/*.map

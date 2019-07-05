@@ -1,0 +1,66 @@
+service: lobby
+provider:
+  name: aws
+  runtime: nodejs10.x
+  stage: ${opt:stage, 'dev'}
+  region: us-west-2
+  versionFunctions: false
+  deploymentBucket:
+    name: ${self:service}-${self:provider.stage}-serverless-deployment
+  environment:
+    STAGE: ${self:provider.stage}
+    SERVICE: ${self:service}
+    TABLE: "lobbies"
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.TABLE}"
+
+package:
+  include:
+    - 'dist/**'
+    - 'node_modules/**'
+    - '!node_modules/nyc/**'
+    - '!node_modules/@types/**'
+    - '!node_modules/aws-sdk/**'
+    - '!node_modules/typescript/**'
+    - '!node_modules/typedoc/**'
+    - '!node_modules/puppeteer/**'
+    - '!node_modules/tslint/**'
+  exclude:
+    - './**'
+
+
+functions:
+  create:
+    handler: dist/db.create
+    events:
+      - http:
+          path: todos
+          method: post
+          cors: true
+
+resources:
+  Resources:
+    LobbyTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: id
+            AttributeType: S
+        KeySchema:
+          -
+            AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: ${self:provider.environment.TABLE}

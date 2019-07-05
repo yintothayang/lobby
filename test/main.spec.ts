@@ -1,28 +1,31 @@
 import { assert } from 'chai'
 import * as puppeteer from 'puppeteer'
-import LudicServer from '../src/server'
+import Server from '../src/server'
+import Client from '../src/client'
 
-const port = 3003
-const server = new LudicServer(port)
+const port = 5555
+const url = "ws://localhost:" + port
+const server = new Server(port)
 
 describe('E2E', async() => {
 
   it("should work", async() => {
-    server.start()
+    await server.start()
 
     let browser = await puppeteer.launch({ headless: false })
     let localPage = await browser.newPage()
     let remotePage = await browser.newPage()
 
-    await setupLocal(localPage)
-    await setupRemote(remotePage)
+    await initWS(localPage)
+    await initWS(remotePage)
 
-    assert.equal(true, true)
+    // await new Promise(resolve => setTimeout(resolve, 1000))
+
+    // await setupRemote(remotePage)
+    // await setupLocal(localPage)
+
     // await browser.close()
   })
-
-
-  // Now create an offer to connect; this starts the process
 
   // localConnection.createOffer()
   //   .then(offer => localConnection.setLocalDescription(offer))
@@ -34,57 +37,73 @@ describe('E2E', async() => {
 
 })
 
+async function initWS(page){
+  return await page.evaluate(async (Client) => {
+    console.log("initWS")
+    eval("Client = " + Client)
 
-async function setupLocal(page){
-  await page.addScriptTag({ path: './node_modules/socket.io-client/dist/socket.io.js'})
-  await page.evaluate((port) => {
-    console.log("setupLocal")
+    const url = "ws://localhost:5555"
+    const client = new Client(url)
 
-    // @ts-ignore
-    var socket = io('http://localhost:' + port);
-    socket.on('connect', function(){console.log("local connected")})
-    socket.on('event', function(data){ console.log("local event")})
-    socket.on('disconnect', function(){})
-
-    function onIceCandidate(e){
-      console.log("onIceCandidate")
-      socket.emit('localIceCandidate', e.candidate)
-    }
-
-      // Handle status changes on the local end of the data
-      // channel; this is the end doing the sending of data
-      // in this example.
-      function handleSendChannelStatusChange(event) {
-        if(sendChannel) {
-          var state = sendChannel.readyState;
-        }
-      }
-
-      // @ts-ignore
-      let localConnection = new RTCPeerConnection()
-
-      // Create the data channel and establish its event listeners
-      let sendChannel = localConnection.createDataChannel("sendChannel")
-      sendChannel.onopen = handleSendChannelStatusChange
-      sendChannel.onclose = handleSendChannelStatusChange
-
-      // Set up the ICE candidates for the two peers TODO
-      localConnection.onicecandidate = onIceCandidate
-
-      // Start
-      localConnection.createOffer().then((offer) => {
-        console.log("offer", offer)
-        localConnection.setLocalDescription(offer)
-        socket.emit('localDescription', offer);
-      })
-  }, port)
+    await client.start()
+  }, Client.toString())
 }
 
 
+// LOCAL
+async function setupLocal(page){
+  await page.evaluate((Client) => {
+    console.log("setupLocal")
+    eval("Client = " + Client)
+
+    const url = "ws://localhost:5555"
+    const client = new Client(url)
+
+    let localConnection
+    let sendChannel
+
+    client.addIceCandidate = (data) => {
+      localConnection.addIceCandidate(data)
+    }
+
+    // Start
+    client.onReady = () => {
+
+      // @ts-ignore
+      localConnection = new RTCPeerConnection()
+
+      localConnection.onicecandidate = (e) => {
+        if(e.candidate) client.send('setRemoteDescription', 'all', e.candidate)
+      }
+
+      // Create the data channel and establish its event listeners
+      sendChannel = localConnection.createDataChannel("sendChannel")
+      sendChannel.onopen = (e) => { console.log("sendChannel.onopen", e)}
+      sendChannel.onclose = (e) => { console.log("sendChannel.onclose", e)}
+
+      localConnection.createOffer().then((offer) => {
+        localConnection.setLocalDescription(offer)
+        client.send('setRemoteDescription', 'all', localConnection.localDescription)
+      })
+    }
+
+    client.start()
+
+  }, Client.toString())
+}
+
+
+// REMOTE
 async function setupRemote(page){
-  await page.addScriptTag({ path: './node_modules/socket.io-client/dist/socket.io.js'})
-  await page.evaluate((port) => {
+  await page.evaluate((Client) => {
     console.log("setupRemote")
+    eval("Client = " + Client)
+
+    const url = "ws://localhost:5555"
+    let client = new Client(url)
+
+    client.start()
+
     var receiveChannel = null
 
     function handleReceiveMessage(event) {
@@ -112,16 +131,18 @@ async function setupRemote(page){
     let remoteConnection = new RTCPeerConnection()
     remoteConnection.ondatachannel = receiveChannelCallback;
 
-    // @ts-ignore
-    var socket = io('http://localhost:' + port);
-    socket.on('connect', function(){});
-    socket.on('event', function(data){});
-    socket.on('disconnect', function(){});
 
+    client.setRemoteDescription = (data) => {
+      remoteConnection.setRemoteDescription(data)
+    }
 
-    // TODO
-    // remoteConnection.onicecandidate = onRemoteIce
+    client.addIceCandidate = (data) => {
+      remoteConnection.addIceCandidate(data)
+    }
 
+    remoteConnection.onicecandidate = (e) => {
+      if(e.candidate) client.send('setRemoteDescription', 'all', e.candidate)
+    }
 
-  }, port)
+  }, Client.toString())
 }

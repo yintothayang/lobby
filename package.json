@@ -1,10 +1,12 @@
 {
-  "name": "ludic-net",
+  "name": "lobby",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "mocha --require ts-node/register -r tsconfig-paths/register -r source-map-support/register --recursive \"./test/**/server.spec.ts\""
+    "build": "rimraf dist && tsc",
+    "deploy": "npm run build && sls deploy --aws-profile personal",
+    "test": "mocha --timeout 25000 --require ts-node/register -r tsconfig-paths/register -r source-map-support/register --recursive \"./test/**/main.spec.ts\""
   },
   "keywords": [],
   "author": "",
@@ -27,6 +29,8 @@
     "tslint-microsoft-contrib": "^6.2.0"
   },
   "dependencies": {
+    "aws-sdk": "^2.488.0",
+    "uuid": "^3.3.2",
     "ws": "^7.0.1"
   }
 }

@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "lib": ["es2017"],
-    "target": "ES6",
+    "lib": ["es2018"],
+    "target": "es2018",
     "module": "commonjs",
     "removeComments": true,
     "resolveJsonModule": true,
