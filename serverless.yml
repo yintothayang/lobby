@@ -21,7 +21,7 @@ provider:
         - dynamodb:PutItem
         - dynamodb:UpdateItem
         - dynamodb:DeleteItem
-      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.TABLE}"
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.PEERS_TABLE}"
 
 package:
   include:
@@ -39,13 +39,6 @@ package:
 
 
 functions:
-  create:
-    handler: dist/db.create
-    events:
-      - http:
-          path: todos
-          method: post
-          cors: true
   listPeers:
     handler: dist/server.listPeers
     events:
@@ -54,6 +47,25 @@ functions:
           method: get
           cors: true
 
+  connect:
+    handler: server.connect
+    events:
+      - websocket:
+          route: $connect
+  disconnect:
+    handler: server.disconnect
+    events:
+      - websocket:
+          route: $disconnect
+  default:
+    handler: handler.defaultHandler
+    events:
+      - websocket: $default #simple event definition without extra route property
+  customFooHandler:
+    handler: handler.fooHandler
+    events:
+      - websocket:
+          route: foo # will trigger if $request.body.action === "foo"
 
 resources:
   Resources:

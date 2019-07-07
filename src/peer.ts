@@ -1,6 +1,6 @@
 import * as uuid from 'uuid'
 import * as AWS from 'aws-sdk'
-import * as db from './db'
+import * as DB from './db'
 
 const TABLE_NAME: string = process.env.PEER_TABLE
 
@@ -14,11 +14,11 @@ export default class Peer {
   }
 
   async save(){
-    await db.createPeer(this.id, this.name)
+    await DB.createPeer(this.id, this.name)
   }
 
   async delete(){
-    await db.deletePeer(this.id)
+    await DB.deletePeer(this.id)
   }
 
 }

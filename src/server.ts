@@ -1,5 +1,6 @@
-import Peer from './Peer'
-import * as DB from './DB'
+import * as AWS from 'aws-sdk'
+import * as DB from './db'
+import Peer from './peer'
 
 export const connect = async (event, context, callback) => {
   const peer = new Peer(event.requestContext.connectionId)
@@ -35,7 +36,7 @@ export const setRemoteDescription = async (event, context, callback) => {
     await apigwManagementApi.postToConnection({ ConnectionId: postData.to, Data: postData }).promise()
   } catch (e) {
     if (e.statusCode === 410) {
-      console.log(`Found stale connection, deleting ${connectionId}`);
+      // console.log(`Found stale connection, deleting ${connectionId}`);
       // await ddb.delete({ TableName: TABLE_NAME, Key: { connectionId } }).promise();
     } else {
       throw e
@@ -49,12 +50,17 @@ export const setRemoteDescription = async (event, context, callback) => {
 export const listPeers = async (event, context, callback) => {
   try {
     const peers = await DB.listPeers()
-    callback(peers)
+    console.log("peers: ", peers)
+    const response = {
+      statusCode: 200,
+      body: JSON.stringify(peers)
+    };
+    callback(null, response)
   } catch(e){
-    callback(e)
+    console.log("catch: ", e)
+    callback(null, e.message)
   }
 }
-
 
 
 // localConnection.createOffer()

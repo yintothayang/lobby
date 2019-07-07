@@ -1,4 +1,4 @@
-import Connection from './Connection'
+import Connection from './connection'
 
 export default class Client {
   connections: Connection[]
@@ -20,7 +20,7 @@ export default class Client {
     this.ws.onmessage = this.onMessage.bind(this)
     this.ws.onopen = this.onOpen.bind(this)
     this.events = {
-      update: this.update.bind(this)
+      // update: this.update.bind(this)
     }
   }
 

@@ -13,13 +13,9 @@ export async function createPeer(id: string, name: string){
       createdAt: timestamp,
       updatedAt: timestamp,
     },
-  };
+  }
 
-  return await DB.put(params, (error) => {
-    if(error){
-      throw error
-    }
-  })
+  return await DB.put(params).promise()
 }
 
 export async function deletePeer(id: string){
@@ -28,35 +24,22 @@ export async function deletePeer(id: string){
     Key: {id}
   };
 
-  return await DB.delete(params, (error) => {
-    if(error){
-      throw error
-    }
-  })
+  return await DB.delete(params).promise()
 }
 
 export async function getPeer(id: string){
   const params = {
     TableName: "peers",
     Key: {id}
-  };
-
-  return await DB.get(params, (error) => {
-    if(error){
-      throw error
-    }
-  })
+  }
+  return await DB.get(params).promise()
 }
 
 export async function listPeers(){
   const params = {
     TableName: "peers",
-  };
+  }
 
-  return await DB.scan(params, (error, data) => {
-    if(error){
-      throw error
-    }
-    return data
-  })
+  const peers = await DB.scan(params).promise()
+  return peers.Items
 }
