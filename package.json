@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "build": "rimraf dist && tsc",
-    "deploy": "npm run build && sls deploy --aws-profile personal",
-    "test": "mocha --timeout 25000 --require ts-node/register -r tsconfig-paths/register -r source-map-support/register --recursive \"./test/**/main.spec.ts\""
+    "deploy": "npm run build && ./node_modules/serverless/bin/serverless deploy --aws-profile personal",
+    "test": "mocha --timeout 25000 --require ts-node/register -r tsconfig-paths/register -r source-map-support/register --recursive \"./test/**/server.spec.ts\""
   },
   "keywords": [],
   "author": "",
@@ -20,6 +20,7 @@
     "chai": "^4.2.0",
     "mocha": "^6.1.4",
     "puppeteer": "^1.17.0",
+    "serverless": "^1.46.1",
     "ts-node": "^8.3.0",
     "tsconfig-paths": "^3.8.0",
     "tslib": "^1.10.0",

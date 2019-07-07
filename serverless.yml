@@ -5,6 +5,8 @@ provider:
   stage: ${opt:stage, 'dev'}
   region: us-west-2
   versionFunctions: false
+  websocketsApiName: lobby-ws
+  websocketsApiRouteSelectionExpression: $request.body.action
   deploymentBucket:
     name: ${self:service}-${self:provider.stage}-serverless-deployment
   environment:
@@ -39,6 +41,22 @@ package:
 
 
 functions:
+  connect:
+    handler: dist/server.connect
+    events:
+      - websocket:
+          route: $connect
+  disconnect:
+    handler: dist/server.disconnect
+    events:
+      - websocket:
+          route: $disconnect
+  customFooHandler:
+    handler: handler.fooHandler
+    events:
+      - websocket:
+          route: foo # will trigger if $request.body.action === "foo"
+
   listPeers:
     handler: dist/server.listPeers
     events:
@@ -46,26 +64,6 @@ functions:
           path: peers
           method: get
           cors: true
-
-  connect:
-    handler: server.connect
-    events:
-      - websocket:
-          route: $connect
-  disconnect:
-    handler: server.disconnect
-    events:
-      - websocket:
-          route: $disconnect
-  default:
-    handler: handler.defaultHandler
-    events:
-      - websocket: $default #simple event definition without extra route property
-  customFooHandler:
-    handler: handler.fooHandler
-    events:
-      - websocket:
-          route: foo # will trigger if $request.body.action === "foo"
 
 resources:
   Resources:

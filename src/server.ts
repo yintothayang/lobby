@@ -6,9 +6,13 @@ export const connect = async (event, context, callback) => {
   const peer = new Peer(event.requestContext.connectionId)
   try {
     await peer.save()
-    callback(peer)
+    const response = {
+      statusCode: 200,
+      body: "OK"
+    }
+    callback(null, response)
   } catch(e){
-    callback(e)
+    callback(null, e)
   }
 }
 
@@ -16,11 +20,17 @@ export const disconnect = async (event, context, callback) => {
   const peer = new Peer(event.requestContext.connectionId)
   try {
     await peer.delete()
-    callback(peer)
+    const response = {
+      statusCode: 200,
+      body: "OK"
+    }
+    callback(null, response)
   } catch(e){
-    callback(e)
+    callback(null, e.message)
   }
 }
+
+
 
 export const setRemoteDescription = async (event, context, callback) => {
   console.log("event", event)
