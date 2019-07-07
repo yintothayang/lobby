@@ -1,16 +1,18 @@
+import Connection from './Connection'
+
 export default class Client {
+  connections: Connection[]
   url: string
   ws: any
   events: any
   id: string
   peers: any
-  connections: any
 
   constructor(url: string){
     this.url = url
   }
 
-  start(){
+  connect(){
     // @ts-ignore
     this.ws = new WebSocket(this.url)
     this.ws.onclose = this.onClose.bind(this)
@@ -50,16 +52,16 @@ export default class Client {
     }))
   }
 
-  update(data){
-    // console.log("update", data)
-    this.id = data.id
-    this.peers = data.clients.filter(c => c != this.id)
+  getPeers(){
+
   }
 
-  // Override
-  setRemoteDescription(data){}
+  setRemoteDescription(data){
 
-  // Override
-  addIceCandidate(data){}
+  }
+
+  addIceCandidate(data){
+
+  }
 
 }

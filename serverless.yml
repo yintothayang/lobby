@@ -10,7 +10,8 @@ provider:
   environment:
     STAGE: ${self:provider.stage}
     SERVICE: ${self:service}
-    TABLE: "lobbies"
+    LOBBIES_TABLE: "lobbies"
+    PEERS_TABLE: "peers"
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -45,6 +46,14 @@ functions:
           path: todos
           method: post
           cors: true
+  listPeers:
+    handler: dist/server.listPeers
+    events:
+      - http:
+          path: peers
+          method: get
+          cors: true
+
 
 resources:
   Resources:
@@ -63,4 +72,20 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
-        TableName: ${self:provider.environment.TABLE}
+        TableName: ${self:provider.environment.LOBBIES_TABLE}
+    PeersTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: id
+            AttributeType: S
+        KeySchema:
+          -
+            AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: ${self:provider.environment.PEERS_TABLE}

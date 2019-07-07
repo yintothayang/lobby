@@ -17,8 +17,6 @@
     "@types/node": "^12.0.8",
     "@types/puppeteer": "^1.12.4",
     "@types/webrtc": "0.0.25",
-    "@types/websocket": "0.0.40",
-    "@types/ws": "^6.0.1",
     "chai": "^4.2.0",
     "mocha": "^6.1.4",
     "puppeteer": "^1.17.0",
@@ -30,7 +28,6 @@
   },
   "dependencies": {
     "aws-sdk": "^2.488.0",
-    "uuid": "^3.3.2",
-    "ws": "^7.0.1"
+    "uuid": "^3.3.2"
   }
 }
