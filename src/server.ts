@@ -31,8 +31,36 @@ export const disconnect = async (event, context, callback) => {
 }
 
 
+export const init = async (event, context, callback) => {
+  console.log("event", event)
 
-export const setRemoteDescription = async (event, context, callback) => {
+  const apigwManagementApi = new AWS.ApiGatewayManagementApi({
+    apiVersion: '2018-11-29',
+    endpoint: event.requestContext.domainName + '/' + event.requestContext.stage
+  })
+
+  const data = JSON.parse(event.body)
+  const to = data.to
+  // TODO remove
+  // const to = event.requestContext.connectionId
+
+  console.log("sending: ", data)
+  console.log("to: ", to)
+
+  try {
+    await apigwManagementApi.postToConnection({ ConnectionId: to, Data: event.body }).promise()
+  } catch (e) {
+    if (e.statusCode === 410) {
+      console.log(`Found stale connection, deleting ${to}`)
+      const peer = new Peer(to)
+      await peer.delete()
+    } else {
+      throw e
+    }
+  }
+}
+
+export const setDescription = async (event, context, callback) => {
   console.log("event", event)
   console.log("event.body", event.body)
 
@@ -63,8 +91,11 @@ export const listPeers = async (event, context, callback) => {
     console.log("peers: ", peers)
     const response = {
       statusCode: 200,
-      body: JSON.stringify(peers)
-    };
+      body: JSON.stringify(peers),
+      headers: {
+        "Access-Control-Allow-Origin": "*"
+      }
+    }
     callback(null, response)
   } catch(e){
     console.log("catch: ", e)

@@ -51,11 +51,16 @@ functions:
     events:
       - websocket:
           route: $disconnect
-  customFooHandler:
-    handler: handler.fooHandler
+  init:
+    handler: dist/server.init
     events:
       - websocket:
-          route: foo # will trigger if $request.body.action === "foo"
+          route: init # will trigger if $request.body.action === "init"
+  setDescription:
+    handler: dist/server.setDescription
+    events:
+      - websocket:
+          route: setDescription # will trigger if $request.body.action === "setDescription"
 
   listPeers:
     handler: dist/server.listPeers

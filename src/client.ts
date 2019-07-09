@@ -20,7 +20,7 @@ export default class Client {
     this.ws.onmessage = this.onMessage.bind(this)
     this.ws.onopen = this.onOpen.bind(this)
     this.events = {
-      // update: this.update.bind(this)
+      init: this.init.bind(this)
     }
   }
 
@@ -33,9 +33,15 @@ export default class Client {
   }
 
   onMessage(e){
-    // console.log("client.onMessage", e)
-    const message = JSON.parse(e.data)
-    this.events[message.event](message.data)
+    console.log("client.onMessage", e)
+    const data = JSON.parse(e.data)
+    console.log("data: ", data)
+    console.log("action: ", data.action)
+    try {
+      this.events[data.action](data)
+    } catch(e){
+      console.log(e)
+    }
   }
 
   onOpen(e){
@@ -43,17 +49,16 @@ export default class Client {
     // this.ws.send({message: "hey server"})
   }
 
-  send(event, to, data){
+  send(action, to, data){
     this.ws.send(JSON.stringify({
-      event,
+      action,
       to,
-      data,
-      from: this.id
+      data
     }))
   }
 
-  getPeers(){
-
+  init(data){
+    console.log("client.init()", data)
   }
 
   setRemoteDescription(data){
@@ -62,6 +67,11 @@ export default class Client {
 
   addIceCandidate(data){
 
+  }
+
+  async getPeers(){
+    // @ts-ignore
+    return await fetch("https://7pd7gfpem8.execute-api.us-west-2.amazonaws.com/dev/peers").then(data => data.json())
   }
 
 }
