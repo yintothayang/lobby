@@ -1,15 +1,23 @@
-import Connection from './connection'
+import Peer from './peer'
+
+export interface WSMessage {
+  event: string
+  to?: string
+  from?: string
+  data: any
+}
+
 
 export default class Client {
-  connections: Connection[]
   url: string
   ws: any
   events: any
   id: string
-  peers: any
+  peers: Peer[]
 
   constructor(url: string){
     this.url = url
+    this.peers =[]
   }
 
   connect(){
@@ -32,7 +40,7 @@ export default class Client {
     console.log("client.onError", e)
   }
 
-  onMessage(e){
+  onMessage(e: WSMessage){
     console.log("client.onMessage", e)
     const data = JSON.parse(e.data)
     console.log("data: ", data)
@@ -46,7 +54,6 @@ export default class Client {
 
   onOpen(e){
     console.log("client.onOpen", e)
-    // this.ws.send({message: "hey server"})
   }
 
   send(action, to, data){
@@ -57,8 +64,14 @@ export default class Client {
     }))
   }
 
+  // On connection request
   init(data){
     console.log("client.init()", data)
+
+    // Add the Peer
+    const p: Peer = new Peer(data.from)
+    p.connect()
+    this.peers.push(p)
   }
 
   setRemoteDescription(data){
@@ -71,7 +84,14 @@ export default class Client {
 
   async getPeers(){
     // @ts-ignore
-    return await fetch("https://7pd7gfpem8.execute-api.us-west-2.amazonaws.com/dev/peers").then(data => data.json())
+    const res = await fetch("https://7pd7gfpem8.execute-api.us-west-2.amazonaws.com/dev/peers").then(data => data.json())
+    this.peers = res.map(result => new Peer(result.id, result.name))
+    return res
+  }
+
+  connectToPeer(peer){
+    this.send("init", peer.id, {})
+    peer.connect()
   }
 
 }

@@ -1,3 +1,4 @@
+// @ts-ignore
 import * as AWS from 'aws-sdk'
 import * as DB from './db'
 import Peer from './peer'
@@ -5,7 +6,7 @@ import Peer from './peer'
 export const connect = async (event, context, callback) => {
   const peer = new Peer(event.requestContext.connectionId)
   try {
-    await peer.save()
+    await DB.createPeer(peer)
     const response = {
       statusCode: 200,
       body: "OK"
@@ -19,7 +20,7 @@ export const connect = async (event, context, callback) => {
 export const disconnect = async (event, context, callback) => {
   const peer = new Peer(event.requestContext.connectionId)
   try {
-    await peer.delete()
+    await DB.deletePeer(peer.id)
     const response = {
       statusCode: 200,
       body: "OK"
@@ -41,21 +42,25 @@ export const init = async (event, context, callback) => {
 
   const data = JSON.parse(event.body)
   const to = data.to
-  // TODO remove
-  // const to = event.requestContext.connectionId
 
   console.log("sending: ", data)
   console.log("to: ", to)
 
+  data.from = event.requestContext.connectionId
+  delete data.to
+
   try {
-    await apigwManagementApi.postToConnection({ ConnectionId: to, Data: event.body }).promise()
+    await apigwManagementApi.postToConnection({ ConnectionId: to, Data: JSON.stringify(data) }).promise()
+    return { statusCode: 200, body: 'sent' }
   } catch (e) {
     if (e.statusCode === 410) {
       console.log(`Found stale connection, deleting ${to}`)
       const peer = new Peer(to)
-      await peer.delete()
+      await DB.deletePeer(peer.id)
+      return { statusCode: 404, body: "Peer not found"}
     } else {
       throw e
+      return { statusCode: 500, body: e.stack }
     }
   }
 }

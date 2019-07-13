@@ -1,12 +1,10 @@
 export default class Connection {
   to: string
-  id: string
   isHost: boolean
   pc: any
   dc: any
 
-  constructor(id: string, to: string, isHost: boolean){
-    this.id = id
+  constructor(to: string, isHost: boolean=false){
     this.to = to
     this.isHost = isHost
 
@@ -24,7 +22,6 @@ export default class Connection {
 
   // pc events
   ondatachannel(e){
-    console.log("ondatachannel(): id", this.id)
     console.log("ondatachannel(): to", this.to)
 
     // TODO, if not isHost?
@@ -43,26 +40,20 @@ export default class Connection {
 
   // dc events
   onopen(e){
-    console.log("onopen(): id", this.id)
     console.log("onopen(): to", this.to)
   }
 
   onclose(e){
-    console.log("onclose(): id", this.id)
     console.log("onclose(): to", this.to)
   }
 
   onmessage(e){
-    console.log("onmessage(): id", this.id)
     console.log("onmessage(): to", this.to)
   }
 
   send(data: any){
     this.dc.send(data)
   }
-
-
-
 
 
   async close(){
@@ -75,31 +66,26 @@ export default class Connection {
 
 
   async addIceCandidate(candidate){
-    console.log("addIceCandidate(): id", this.id)
     console.log("addIceCandidate(): to", this.to)
     return await this.pc.addIceCandidate(candidate)
   }
 
   async createOffer(){
-    console.log("createOffer(): id", this.id)
     console.log("createOffer(): to", this.to)
     return await this.pc.createOffer()
   }
 
   async setLocalDescription(desc){
-    console.log("setLocalDescription(): id", this.id)
     console.log("setLocalDescription(): to", this.to)
     return await this.pc.setLocalDescription(desc)
   }
 
   async setRemoteDescription(desc){
-    console.log("setRemoteDescription(): id", this.id)
     console.log("setRemoteDescription(): to", this.to)
     return await this.pc.setRemoteDescription(desc)
   }
 
   async createAnswer(){
-    console.log("createAnswer(): id", this.id)
     console.log("createAnswer(): to", this.to)
     return await this.pc.createAnswer()
   }

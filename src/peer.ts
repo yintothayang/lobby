@@ -1,24 +1,18 @@
-import * as uuid from 'uuid'
-import * as AWS from 'aws-sdk'
-import * as DB from './db'
-
-const TABLE_NAME: string = process.env.PEER_TABLE
+import Connection from './connection'
 
 export default class Peer {
   id: string
   name?: string
+  connection: Connection
 
   constructor(id: string, name?: string){
     this.id = id
     this.name = name
+    this.connection = null
   }
 
-  async save(){
-    await DB.createPeer(this.id, this.name)
-  }
-
-  async delete(){
-    await DB.deletePeer(this.id)
+  async connect(){
+    this.connection = new Connection(this.id)
   }
 
 }

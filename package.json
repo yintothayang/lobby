@@ -4,9 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "rimraf dist && tsc",
+    "build": "rimraf dist && npm run build:client && npm run build:server",
+    "build:client": "tsc --p ./tsconfig.client.json",
+    "build:server": "tsc --p ./tsconfig.server.json",
     "deploy": "npm run build && ./node_modules/serverless/bin/serverless deploy --aws-profile personal",
-    "test": "mocha --timeout 25000 --require ts-node/register -r tsconfig-paths/register -r source-map-support/register --recursive \"./test/**/server.spec.ts\""
+    "test": " mocha --timeout 25000 --require ts-node/register -r tsconfig-paths/register -r source-map-support/register --recursive \"./test/**/server.spec.ts\""
   },
   "keywords": [],
   "author": "",
@@ -30,9 +32,6 @@
     "tslint-microsoft-contrib": "^6.2.0"
   },
   "dependencies": {
-    "aws-sdk": "^2.488.0",
-    "request": "^2.88.0",
-    "request-promise-native": "^1.0.7",
-    "uuid": "^3.3.2"
+    "aws-sdk": "^2.488.0"
   }
 }

@@ -1,15 +1,16 @@
-import * as uuid from 'uuid'
+// @ts-ignore
 import * as AWS from 'aws-sdk'
+import Peer from './peer'
 
 const DB = new AWS.DynamoDB.DocumentClient()
 
-export async function createPeer(id: string, name: string){
+export async function createPeer(peer: Peer){
   const timestamp = new Date().getTime()
   const params = {
     TableName: "peers",
     Item: {
-      id,
-      name,
+      id: peer.id,
+      name: peer.name,
       createdAt: timestamp,
       updatedAt: timestamp,
     },
