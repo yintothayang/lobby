@@ -1,16 +1,14 @@
 // @ts-ignore
 import * as AWS from 'aws-sdk'
-import Peer from './peer'
-
 const DB = new AWS.DynamoDB.DocumentClient()
 
-export async function createPeer(peer: Peer){
+export async function createPeer(id: string, name?: string){
   const timestamp = new Date().getTime()
   const params = {
     TableName: "peers",
     Item: {
-      id: peer.id,
-      name: peer.name,
+      id,
+      name,
       createdAt: timestamp,
       updatedAt: timestamp,
     },
@@ -40,7 +38,6 @@ export async function listPeers(){
   const params = {
     TableName: "peers",
   }
-
   const peers = await DB.scan(params).promise()
   return peers.Items
 }

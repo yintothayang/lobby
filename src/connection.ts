@@ -55,7 +55,6 @@ export default class Connection {
     this.dc.send(data)
   }
 
-
   async close(){
     await this.dc.close()
     await this.pc.close()

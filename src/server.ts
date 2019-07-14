@@ -1,12 +1,11 @@
 // @ts-ignore
 import * as AWS from 'aws-sdk'
 import * as DB from './db'
-import Peer from './peer'
 
 export const connect = async (event, context, callback) => {
-  const peer = new Peer(event.requestContext.connectionId)
+  const id: string = event.requestContext.connectionId
   try {
-    await DB.createPeer(peer)
+    await DB.createPeer(id)
     const response = {
       statusCode: 200,
       body: "OK"
@@ -18,9 +17,9 @@ export const connect = async (event, context, callback) => {
 }
 
 export const disconnect = async (event, context, callback) => {
-  const peer = new Peer(event.requestContext.connectionId)
+  const id: string = event.requestContext.connectionId
   try {
-    await DB.deletePeer(peer.id)
+    await DB.deletePeer(id)
     const response = {
       statusCode: 200,
       body: "OK"
@@ -32,7 +31,7 @@ export const disconnect = async (event, context, callback) => {
 }
 
 
-export const init = async (event, context, callback) => {
+export const send = async (event, context, callback) => {
   console.log("event", event)
 
   const apigwManagementApi = new AWS.ApiGatewayManagementApi({
@@ -44,7 +43,6 @@ export const init = async (event, context, callback) => {
   const to = data.to
 
   console.log("sending: ", data)
-  console.log("to: ", to)
 
   data.from = event.requestContext.connectionId
   delete data.to
@@ -55,8 +53,7 @@ export const init = async (event, context, callback) => {
   } catch (e) {
     if (e.statusCode === 410) {
       console.log(`Found stale connection, deleting ${to}`)
-      const peer = new Peer(to)
-      await DB.deletePeer(peer.id)
+      await DB.deletePeer(to)
       return { statusCode: 404, body: "Peer not found"}
     } else {
       throw e
@@ -65,35 +62,10 @@ export const init = async (event, context, callback) => {
   }
 }
 
-export const setDescription = async (event, context, callback) => {
-  console.log("event", event)
-  console.log("event.body", event.body)
-
-  const apigwManagementApi = new AWS.ApiGatewayManagementApi({
-    apiVersion: '2018-11-29',
-    endpoint: event.requestContext.domainName + '/' + event.requestContext.stage
-  })
-
-  const postData = JSON.parse(event.body).data
-  try {
-    await apigwManagementApi.postToConnection({ ConnectionId: postData.to, Data: postData }).promise()
-  } catch (e) {
-    if (e.statusCode === 410) {
-      // console.log(`Found stale connection, deleting ${connectionId}`);
-      // await ddb.delete({ TableName: TABLE_NAME, Key: { connectionId } }).promise();
-    } else {
-      throw e
-    }
-  }
-}
-
-
-
 // Non-WS
 export const listPeers = async (event, context, callback) => {
   try {
     const peers = await DB.listPeers()
-    console.log("peers: ", peers)
     const response = {
       statusCode: 200,
       body: JSON.stringify(peers),
@@ -103,7 +75,7 @@ export const listPeers = async (event, context, callback) => {
     }
     callback(null, response)
   } catch(e){
-    console.log("catch: ", e)
+    console.log("error: ", e)
     callback(null, e.message)
   }
 }

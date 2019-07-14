@@ -4,11 +4,12 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "rimraf dist && npm run build:client && npm run build:server",
+    "dev": "parcel index.html -p 8002",
+    "build": "rimraf dist && npm run build:server && npm run build:client",
     "build:client": "tsc --p ./tsconfig.client.json",
     "build:server": "tsc --p ./tsconfig.server.json",
     "deploy": "npm run build && ./node_modules/serverless/bin/serverless deploy --aws-profile personal",
-    "test": " mocha --timeout 25000 --require ts-node/register -r tsconfig-paths/register -r source-map-support/register --recursive \"./test/**/server.spec.ts\""
+    "test": "npm run build:client && mocha --timeout 25000 --require ts-node/register -r tsconfig-paths/register -r source-map-support/register --recursive \"./test/**/server.spec.ts\""
   },
   "keywords": [],
   "author": "",
@@ -22,14 +23,17 @@
     "@types/request-promise-native": "^1.0.16",
     "@types/webrtc": "0.0.25",
     "chai": "^4.2.0",
+    "install": "^0.13.0",
     "mocha": "^6.1.4",
+    "npm": "^6.10.1",
     "puppeteer": "^1.17.0",
     "serverless": "^1.46.1",
     "ts-node": "^8.3.0",
     "tsconfig-paths": "^3.8.0",
     "tslib": "^1.10.0",
     "tslint": "^5.17.0",
-    "tslint-microsoft-contrib": "^6.2.0"
+    "tslint-microsoft-contrib": "^6.2.0",
+    "typescript": "^3.5.3"
   },
   "dependencies": {
     "aws-sdk": "^2.488.0"

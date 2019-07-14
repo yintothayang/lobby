@@ -2,13 +2,8 @@
   "compilerOptions": {
     "lib": ["es2018"],
     "target": "es2018",
-    "module": "commonjs",
-    "removeComments": true,
-    "resolveJsonModule": true,
-    "preserveConstEnums": true,
-    "importHelpers": true,
-    "allowSyntheticDefaultImports": true,
-    "sourceMap": true,
+    "module": "umd",
+    "sourceMap": false,
     "baseUrl": ".",
     "outDir": "dist/",
     "types": [
@@ -19,13 +14,8 @@
       "puppeteer",
     ],
     "skipLibCheck": true,
-    "paths": {
-      "@src/*" : ["./src/*"],
-      "@test/*": ["./test/*"],
-      "@dist/*": ["./dist/*"],
-    }
   },
-  "include": ["src/**/*"],
+  "include": ["src/client.ts"],
   "exclude": [
     "node_modules"
   ]

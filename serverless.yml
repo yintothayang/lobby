@@ -27,18 +27,10 @@ provider:
 
 package:
   include:
-    - 'dist/**'
-    - 'node_modules/**'
-    - '!node_modules/nyc/**'
-    - '!node_modules/@types/**'
-    - '!node_modules/aws-sdk/**'
-    - '!node_modules/typescript/**'
-    - '!node_modules/typedoc/**'
-    - '!node_modules/puppeteer/**'
-    - '!node_modules/tslint/**'
+    - 'dist/server.js'
+    - 'dist/db.js'
   exclude:
     - './**'
-
 
 functions:
   connect:
@@ -51,16 +43,11 @@ functions:
     events:
       - websocket:
           route: $disconnect
-  init:
-    handler: dist/server.init
+  send:
+    handler: dist/server.send
     events:
       - websocket:
-          route: init # will trigger if $request.body.action === "init"
-  setDescription:
-    handler: dist/server.setDescription
-    events:
-      - websocket:
-          route: setDescription # will trigger if $request.body.action === "setDescription"
+          route: send # will trigger if $request.body.action === "send
 
   listPeers:
     handler: dist/server.listPeers
