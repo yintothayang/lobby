@@ -58,7 +58,8 @@ export default class Client {
 
   send(action, to, data){
     this.ws.send(JSON.stringify({
-      action,
+      action: 'send',
+
       to,
       data
     }))
@@ -91,7 +92,7 @@ export default class Client {
 
   connectToPeer(peer){
     this.send("init", peer.id, {})
-    peer.connect()
+    // peer.connect()
   }
 
 }

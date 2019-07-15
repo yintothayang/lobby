@@ -52,9 +52,6 @@ const connect = async (page) => {
     eval("Client = " + Client)
     eval("Peer = " + Peer)
     eval("Connection = " + Connection)
-
-    console.log(Client)
-    console.log(Peer)
     const url = "wss://bamk6ty9r9.execute-api.us-west-2.amazonaws.com/dev"
     const client = new Client(url)
     return await client.connect()

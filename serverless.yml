@@ -28,7 +28,6 @@ provider:
 package:
   include:
     - 'dist/server.js'
-    - 'dist/db.js'
   exclude:
     - './**'
 
@@ -43,11 +42,11 @@ functions:
     events:
       - websocket:
           route: $disconnect
-  send:
+  default:
     handler: dist/server.send
     events:
       - websocket:
-          route: send # will trigger if $request.body.action === "send
+          route: $default
 
   listPeers:
     handler: dist/server.listPeers

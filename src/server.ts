@@ -1,6 +1,53 @@
 // @ts-ignore
 import * as AWS from 'aws-sdk'
-import * as DB from './db'
+
+const DDB =  new AWS.DynamoDB.DocumentClient()
+
+export class DB {
+  static async createPeer(id: string, name?: string){
+    const timestamp = new Date().getTime()
+    const params = {
+      TableName: "peers",
+      Item: {
+        id,
+        name,
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      },
+    }
+
+    return await DDB.put(params).promise()
+  }
+
+  static async deletePeer(id: string){
+    const params = {
+      TableName: "peers",
+      Key: {id}
+    };
+
+    return await DDB.delete(params).promise()
+  }
+
+  static async getPeer(id: string){
+    const params = {
+      TableName: "peers",
+      Key: {id}
+    }
+    return await DDB.get(params).promise()
+  }
+
+  static async listPeers(){
+    const params = {
+      TableName: "peers",
+    }
+    const peers = await DDB.scan(params).promise()
+    return peers.Items
+  }
+
+}
+
+
+
 
 export const connect = async (event, context, callback) => {
   const id: string = event.requestContext.connectionId
@@ -79,6 +126,7 @@ export const listPeers = async (event, context, callback) => {
     callback(null, e.message)
   }
 }
+
 
 
 // localConnection.createOffer()
