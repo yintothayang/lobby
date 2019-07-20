@@ -1,6 +1,3 @@
-// import Peer from './peer'
-
-
 export interface WSMessage {
   event: string
   to?: string
@@ -28,7 +25,9 @@ export default class Client {
     this.ws.onmessage = this.onMessage.bind(this)
     this.ws.onopen = this.onOpen.bind(this)
     this.events = {
-      init: this.init.bind(this)
+      init: this.init.bind(this),
+      addIceCandidate: this.addIceCandidate.bind(this),
+      setRemoteDescription: this.setRemoteDescription.bind(this),
     }
   }
 
@@ -40,26 +39,25 @@ export default class Client {
     console.log("client.onError", e)
   }
 
+  onOpen(e){
+    console.log("client.onOpen", e)
+  }
+
   onMessage(e: WSMessage){
     console.log("client.onMessage", e)
     const data = JSON.parse(e.data)
     console.log("data: ", data)
-    console.log("action: ", data.action)
+    console.log("event: ", data.event)
     try {
-      this.events[data.action](data)
+      this.events[data.event](data)
     } catch(e){
       console.log(e)
     }
   }
 
-  onOpen(e){
-    console.log("client.onOpen", e)
-  }
-
-  send(action, to, data){
+  send(event, to, data){
     this.ws.send(JSON.stringify({
-      action: 'send',
-
+      event,
       to,
       data
     }))
@@ -75,12 +73,27 @@ export default class Client {
     this.peers.push(p)
   }
 
-  setRemoteDescription(data){
+  async setRemoteDescription(message){
+    console.log("setRemoteDescription", message)
+    let peer = this.peers.find(p => p.id == message.from)
 
+    // @ts-ignore
+    const description = new RTCSessionDescription()
+    description.type = 'offer'
+    description.sdp = message.data.offer.sdp
+    if(!peer.connection.isHost){
+      await peer.connection.setRemoteDescription(description)
+      const offer = await peer.connection.createAnswer()
+      this.send("setRemoteDescription", peer.id, {offer})
+    }
   }
 
-  addIceCandidate(data){
-
+  async addIceCandidate(data){
+    let peer = this.peers.find(p => p.id == data.from)
+    if(!peer){
+      console.log("Peer not found", data)
+    }
+    await peer.connection.addIceCandidate(data.candidate)
   }
 
   async getPeers(){
@@ -90,9 +103,11 @@ export default class Client {
     return res
   }
 
-  connectToPeer(peer){
+  async connectToPeer(peer){
+    console.log("connectToPeer: ", peer)
     this.send("init", peer.id, {})
-    // peer.connect()
+    const offer = await peer.connect(true)
+    this.send("setRemoteDescription", peer.id, {offer})
   }
 
 }
@@ -109,8 +124,15 @@ export class Peer {
     this.connection = null
   }
 
-  async connect(){
-    this.connection = new Connection(this.id)
+  async connect(isHost=false){
+    this.connection = new Connection(this.id, isHost)
+    if(isHost){
+      const offer = await this.connection.createOffer()
+      console.log("offer: ", offer)
+      await this.connection.setLocalDescription(offer)
+      console.log("localDescription: ", this.connection.pc.localDescription)
+      return this.connection.pc.localDescription
+    }
   }
 
 }
@@ -130,9 +152,11 @@ export class Connection {
     this.pc = new RTCPeerConnection()
     this.pc.ondatachannel = this.ondatachannel.bind(this)
 
-    this.dc = this.pc.createDataChannel(this.to)
-    this.dc.onopen = this.onopen.bind(this)
-    this.dc.onclose = this.onclose.bind(this)
+    if(isHost){
+      this.dc = this.pc.createDataChannel(this.to)
+      this.dc.onopen = this.onopen.bind(this)
+      this.dc.onclose = this.onclose.bind(this)
+    }
 
     this.pc.onicecandidate = this.onicecandidate.bind(this)
 
@@ -143,17 +167,22 @@ export class Connection {
     console.log("ondatachannel(): to", this.to)
 
     // TODO, if not isHost?
-    this.dc = e.channel
-    this.dc.onopen = this.onopen.bind(this)
-    this.dc.onclose = this.onclose.bind(this)
-    this.dc.onmessage = this.onmessage.bind(this)
+    if(!this.isHost){
+      this.dc = e.channel
+      this.dc.onopen = this.onopen.bind(this)
+      this.dc.onclose = this.onclose.bind(this)
+      this.dc.onmessage = this.onmessage.bind(this)
+    }
   }
 
   onicecandidate(e){
-    // TODO send to Peer
-    // localConnection.onicecandidate = e => !e.candidate
-    //   || remoteConnection.addIceCandidate(e.candidate)
-    //   .catch(handleAddCandidateError);
+    console.log("connection.onicecandidate", e)
+    if(e.candidate){
+      // TODO send to Peer
+      // localConnection.onicecandidate = e => !e.candidate
+      //   || remoteConnection.addIceCandidate(e.candidate)
+      //   .catch(handleAddCandidateError);
+    }
   }
 
   // dc events

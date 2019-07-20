@@ -30,7 +30,7 @@ describe('Server', async() => {
       console.log(peers)
 
       client.onOpen = (e) => {
-        client.connectToPeer(peers[0])
+        client.connectToPeer(client.peers[0])
       }
 
       client.connect()
@@ -55,7 +55,6 @@ const connect = async (page) => {
     const url = "wss://bamk6ty9r9.execute-api.us-west-2.amazonaws.com/dev"
     const client = new Client(url)
     return await client.connect()
-
   }, data)
 }
 

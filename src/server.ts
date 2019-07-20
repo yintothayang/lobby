@@ -1,6 +1,5 @@
 // @ts-ignore
 import * as AWS from 'aws-sdk'
-
 const DDB =  new AWS.DynamoDB.DocumentClient()
 
 export class DB {
