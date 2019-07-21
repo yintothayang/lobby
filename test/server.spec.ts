@@ -30,9 +30,8 @@ describe('Server', async() => {
       console.log(peers)
 
       client.onOpen = (e) => {
-        client.connectToPeer(client.peers[0])
+        client.requestConnection(client.peers[0])
       }
-
       client.connect()
     }, data)
 
