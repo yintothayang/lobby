@@ -1,0 +1,24 @@
+  #+begin_src plantuml :file sequence.png :exports both
+  actor Peer1
+  control AWS
+  actor Peer2
+
+  Peer2 -> AWS : 'connect()'
+  AWS -> Peer2 : client.onConnect()
+  Peer1 -> AWS : 'getPeers()'
+  AWS -> Peer1 : [Peer2]
+  Peer1 -> AWS : 'connect()'
+  AWS -> Peer1 : client.onConnect()
+  Peer1 -> AWS : 'requestConnection()'
+  AWS -> Peer2 : client.onConnectionRequest()
+  Peer2 -> AWS : 'connectionAccepted'
+  AWS -> Peer1 : client.onConnectionAccepted()
+  Peer1 -> AWS : 'setRemoteDescription'
+  ...ICE candidate exchanges...
+  AWS -> Peer2 : client.setRemoteDescription()
+  Peer2 -> AWS : 'setRemoteDescription'
+  AWS -> Peer1 : client.setRemoteDescription()
+  #+end_src
+
+  #+RESULTS:
+  [[file:sequence.png]]
