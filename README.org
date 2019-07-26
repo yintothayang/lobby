@@ -1,6 +1,10 @@
-  #+begin_src plantuml :file sequence.png :exports both
+* Lobby
+  *WebRTC connection client/server via serverless websockets*
+
+** Sequence
+   #+begin_src plantuml :file sequence.png :exports both
   actor Peer1
-  control AWS
+  participant AWS
   actor Peer2
 
   Peer2 -> AWS : 'connect()'
@@ -14,11 +18,12 @@
   Peer2 -> AWS : 'connectionAccepted'
   AWS -> Peer1 : client.onConnectionAccepted()
   Peer1 -> AWS : 'setRemoteDescription'
-  ...ICE candidate exchanges...
   AWS -> Peer2 : client.setRemoteDescription()
   Peer2 -> AWS : 'setRemoteDescription'
   AWS -> Peer1 : client.setRemoteDescription()
-  #+end_src
+  Peer1 -> AWS : 'addIceCandidate'
+  AWS -> Peer2 : client.addIceCandidate()
+   #+end_src
 
-  #+RESULTS:
-  [[file:sequence.png]]
+   #+RESULTS:
+   [[file:sequence.png]]

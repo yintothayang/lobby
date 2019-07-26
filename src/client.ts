@@ -5,83 +5,95 @@ export interface WSMessage {
   data: any
 }
 
+export type ClientEventType = "ws_open" | "ws_error" | "ws_message" | "ws_close"
+  | "connection_request" | "connection_accepted" | "add_ice_candidate" | "set_remote_description"
+
 export default class Client {
   url: string
   ws: any
   events: any
   id: string
+  debug: boolean
   peers: Peer[]
+  listeners: any
 
-  constructor(url: string){
+  constructor(url: string, debug: boolean = false){
     this.url = url
+    this.debug = debug
     this.peers =[]
+    this.listeners = {}
+
+    this.addListener("connection_request", this.onConnectionRequest.bind(this))
+    this.addListener("connection_accepted", this.onConnectionAccepted.bind(this))
+    this.addListener("add_ice_candidate", this.addIceCandidate.bind(this))
+    this.addListener("set_remote_description", this.setRemoteDescription.bind(this))
+  }
+
+  async getPeers(){
+    // @ts-ignore
+    const res = await fetch("https://7pd7gfpem8.execute-api.us-west-2.amazonaws.com/dev/peers").then(data => data.json())
+    this.peers = res.map(result => new Peer(result.id, result.name))
+    return res
+  }
+
+  addListener(eventType: ClientEventType, listener: (message: any) => Promise<void>){
+    if(this.listeners[eventType]){
+      this.listeners[eventType].push(listener)
+    } else {
+      this.listeners[eventType] = [listener]
+    }
+  }
+
+  onEvent(eventType: ClientEventType, event: any){
+    if(this.listeners[eventType]){
+      this.listeners[eventType].forEach(listener => {listener(event)})
+    }
   }
 
   connect(){
     // @ts-ignore
     this.ws = new WebSocket(this.url)
-    this.ws.onclose = this.onClose.bind(this)
-    this.ws.onerror = this.onError.bind(this)
-    this.ws.onmessage = this.onMessage.bind(this)
-    this.ws.onopen = this.onOpen.bind(this)
-    this.events = {
-      connectionRequest: this.onConnectionRequest.bind(this),
-      connectionAccepted: this.onConnectionAccepted.bind(this),
-      addIceCandidate: this.addIceCandidate.bind(this),
-      setRemoteDescription: this.setRemoteDescription.bind(this),
-    }
+
+    this.ws.addEventListener('open', (event)=>{this.onEvent("ws_open", event)})
+    this.ws.addEventListener('close', (event)=>{this.onEvent("ws_close", event)})
+    this.ws.addEventListener('error', (event)=>{this.onEvent("ws_error", event)})
+    this.ws.addEventListener('message', (event)=>{this.onEvent("ws_message", event)})
+    this.ws.addEventListener('message', (e: WSMessage)=>{
+      const data = JSON.parse(e.data)
+      try {
+        this.onEvent(data.eventType, data)
+      } catch(e){
+        console.error("ws_message Error: ", e)
+      }
+    })
   }
 
-  onClose(e){
-    console.log("client.onClose", e)
-  }
-
-  onError(e){
-    console.log("client.onError", e)
-  }
-
-  onOpen(e){
-    console.log("client.onOpen", e)
-  }
-
-  onMessage(e: WSMessage){
-    console.log("client.onMessage", e)
-    const data = JSON.parse(e.data)
-    // console.log("data: ", data)
-    // console.log("event: ", data.event)
-    try {
-      this.events[data.event](data)
-    } catch(e){
-      console.log(e)
-    }
-  }
-
-  async send(event, to, data){
+  async send(eventType: ClientEventType, to, data){
     await this.ws.send(JSON.stringify({
-      event,
-      to,
-      data
-    }))
-  }
-
-  // A new Peer wants to connect
-  async onConnectionRequest(message){
-    console.log("client.onConnectionRequest()", message)
-    try {
-      const p: Peer = new Peer(message.from)
-      this.peers.push(p)
-      p.connect(false, this.onIceCandidate.bind(this), this.onOffer.bind(this))
-      await this.send("connectionAccepted", message.from, {})
-    } catch(e){
-      console.error("ERROR: ", e)
+        eventType,
+        to,
+        data
+      }))
     }
-  }
 
-  async onConnectionAccepted(message){
-    console.log("client.onConnectionAccepted()", message)
-    try {
-      const peer = this.peers.find(p => p.id == message.from)
-      const offer = await peer.connect(true, this.onIceCandidate.bind(this, peer.id), this.onOffer.bind(this, peer.id))
+    // A new Peer wants to connect
+    async onConnectionRequest(message){
+      console.log("client.onConnectionRequest()", message)
+      try {
+        const p: Peer = new Peer(message.from, this.listeners)
+        this.peers.push(p)
+        p.connect(false, this.onIceCandidate.bind(this), this.onOffer.bind(this))
+        await this.send("connection_accepted", message.from, {})
+      } catch(e){
+        console.error("ERROR: ", e)
+      }
+    }
+
+    async onConnectionAccepted(message){
+      console.log("client.onConnectionAccepted()", message)
+      try {
+        const peer = this.peers.find(p => p.id == message.from)
+        const offer = await peer.connect(true, this.onIceCandidate.bind(this, peer.id), this.onOffer.bind(this, peer.id))
     } catch(e) {
       console.error("ERROR: ", e)
     }
@@ -100,7 +112,7 @@ export default class Client {
       if(!peer.connection.isHost){
         const offer = await peer.connection.createAnswer()
         await peer.connection.setLocalDescription(offer)
-        this.send("setRemoteDescription", peer.id, {offer})
+        this.send("set_remote_description", peer.id, {offer})
       }
     } catch(e){
       console.error("ERROR: ", e)
@@ -121,28 +133,30 @@ export default class Client {
     }
   }
 
-  async getPeers(){
-    // @ts-ignore
-    const res = await fetch("https://7pd7gfpem8.execute-api.us-west-2.amazonaws.com/dev/peers").then(data => data.json())
-    this.peers = res.map(result => new Peer(result.id, result.name))
-    return res
-  }
-
   async requestConnection(peer){
     console.log("requestConnection: ", peer)
-    await this.send("connectionRequest", peer.id, {})
+    await this.send("connection_request", peer.id, {})
   }
 
   async onIceCandidate(id, e){
     console.log("onIceCandidate: ", e)
     if(e && e.candidate){
       const candidate = e.candidate.toJSON()
-      this.send("addIceCandidate", id, {candidate})
+      this.send("add_ice_candidate", id, {candidate})
     }
   }
 
   async onOffer(id, offer){
-    this.send("setRemoteDescription", id, {offer})
+    this.send("set_remote_description", id, {offer})
+  }
+
+  async onDCOpen(peer: Peer, event){
+    if(this.debug) console.log("onDCOpen: ", event)
+
+  }
+  async onDCMessage(peer: Peer, event){
+    if(this.debug) console.log("onDCMessage: ", event)
+
   }
 }
 
@@ -150,10 +164,12 @@ export default class Client {
 export class Peer {
   id: string
   name?: string
+  listeners: any[]
   connection: Connection
 
-  constructor(id: string, name?: string){
+  constructor(id: string, listeners: any, name?: string){
     this.id = id
+    this.listeners = listeners
     this.name = name
     this.connection = null
   }
@@ -201,7 +217,6 @@ export class Connection {
       this.dc.onmessage = this.onmessage.bind(this)
     }
   }
-
 
   // dc events
   onopen(e){
