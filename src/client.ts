@@ -156,14 +156,25 @@ export default class Client {
     this.send("set_remote_description", to, {offer})
   }
 
-  async onDCOpen(peer: Peer, event){
+  async onDCOpen(peerId: string, event){
     console.log("onDCOpen: ", event)
 
   }
-  async onDCMessage(peer: Peer, event){
+  async onDCMessage(peerId: string, event){
     console.log("onDCMessage: ", event)
 
   }
+
+  async rtcSend(peerId: string, data: any){
+    try {
+      const peer = this.peers.find(p => p.id === peerId)
+      peer.connection.send(data)
+    } catch(e){
+      console.error("ERROR: ", e)
+      throw e
+    }
+  }
+
 }
 
 

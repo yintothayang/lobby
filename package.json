@@ -9,7 +9,7 @@
     "build:client": "tsc --p ./tsconfig.client.json",
     "build:server": "tsc --p ./tsconfig.server.json",
     "deploy": "npm run build && ./node_modules/serverless/bin/serverless deploy --aws-profile personal",
-    "test": "npm run build:client && mocha --timeout 25000 --require ts-node/register -r tsconfig-paths/register -r source-map-support/register --recursive \"./test/**/basic.spec.ts\""
+    "test": "npm run build:client && mocha --timeout 25000 --require ts-node/register -r tsconfig-paths/register -r source-map-support/register --recursive \"./test/**/data.spec.ts\""
   },
   "keywords": [],
   "author": "",

@@ -3,7 +3,7 @@ import * as puppeteer from 'puppeteer'
 
 import Client, {Peer, Connection} from '../dist/client'
 
-describe('Basic', async() => {
+describe('Data', async() => {
 
   it("should work", async() => {
     const browser = await puppeteer.launch({ headless: false })
@@ -24,14 +24,19 @@ describe('Basic', async() => {
       eval("Connection = " + Connection)
 
       const url = "wss://bamk6ty9r9.execute-api.us-west-2.amazonaws.com/dev"
-      let client = new Client(url)
+      let client = new Client(url, true)
 
       let peers = await client.getPeers()
 
-      client.onWSOpen = (e) => {
+      await client.connect()
+      client.addListener('ws_open', ()=>{
         client.requestConnection(client.peers[0])
-      }
-      client.connect()
+      })
+
+      client.addListener('on_dc_open', (peerId: string, event)=>{
+        client.rtcSend(peerId, "Hello Peer")
+      })
+
     }, data)
 
     // await browser.close()
@@ -51,8 +56,15 @@ const connect = async (page) => {
     eval("Peer = " + Peer)
     eval("Connection = " + Connection)
     const url = "wss://bamk6ty9r9.execute-api.us-west-2.amazonaws.com/dev"
-    const client = new Client(url)
+    const client = new Client(url, true)
+
+    client.addListener('on_dc_message', (peerId: string, event)=>{
+      console.log("Message from: ", peerId)
+      console.log(event)
+    })
+
     return await client.connect()
+
   }, data)
 }
 
