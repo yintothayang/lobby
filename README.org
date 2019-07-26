@@ -1,6 +1,15 @@
 * Lobby
   *WebRTC connection client/server via serverless websockets*
 
+  Pretty new tech to the cloud world:
+  - https://aws.amazon.com/blogs/compute/announcing-websocket-apis-in-amazon-api-gateway/
+    Added to AWS in dec 18'
+
+  - https://serverless.com/blog/api-gateway-websockets-example/
+    Added to serverless yaml end of 18'
+
+  Allows for highly scalable websocket connections via API Gateway
+
 ** Sequence
    #+begin_src plantuml :file sequence.png :exports both
   actor Peer1
