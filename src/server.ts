@@ -45,9 +45,6 @@ export class DB {
 
 }
 
-
-
-
 export const connect = async (event, context, callback) => {
   const id: string = event.requestContext.connectionId
   try {

@@ -30,7 +30,7 @@ describe('Basic', async() => {
       console.log(peers)
 
       await client.connect()
-      client.ws.addEventListener('open', ()=>{
+      client.addListener('ws_open', ()=>{
         client.requestConnection(client.peers[0])
       })
     }, data)
