@@ -1,22 +1,33 @@
 {
   "compilerOptions": {
-    "lib": ["es2018"],
-    "target": "es2018",
-    "module": "umd",
-    "sourceMap": false,
+    "target": "esnext",
+    "lib": ["es2017"],
+    "module": "commonjs",
+    "sourceMap": true,
     "baseUrl": ".",
+    "declaration": true,
     "outDir": "dist/",
+    "allowJs": false,
+    "alwaysStrict": true,
+    "noImplicitAny": false,
+    "noImplicitReturns": false,
+    "noImplicitThis": false,
+    "noEmitOnError": true,
+    "strictNullChecks": false,
+    "experimentalDecorators": true,
+    "skipLibCheck": true,
     "types": [
       "node",
       "mocha",
       "chai",
       "webrtc",
-      "puppeteer",
+      "puppeteer"
     ],
-    "skipLibCheck": true,
+    "paths": {
+      "@src/*" : ["src/*"],
+      "@lib/*" : ["lib/*"],
+      "@tests/*": ["tests/*"]
+    }
   },
   "include": ["src/client.ts"],
-  "exclude": [
-    "node_modules"
-  ]
 }
