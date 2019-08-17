@@ -1,6 +1,17 @@
 * Lobby
   *WebRTC connection client/server via serverless websockets*
 
+** What is WebRTC
+   https://en.wikipedia.org/wiki/WebRTC
+   Web Real-Time Communication, is an open source project / spec for web native Peer-to-Peer communication.
+   "My browser can talk directly to your browser, natively"
+
+   JavaScript inventor Brendan Eich called it a "new front in the long war for an open and unencumbered web"
+
+
+  MDN docs
+  https://developer.mozilla.org/en-US/docs/Web/API/WebRTC_API
+
   Pretty new tech to the cloud world:
   - https://aws.amazon.com/blogs/compute/announcing-websocket-apis-in-amazon-api-gateway/
     Added to AWS in dec 18'

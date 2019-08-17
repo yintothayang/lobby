@@ -162,7 +162,6 @@ export default class Client {
   }
   async onDCMessage(peerId: string, event){
     console.log("onDCMessage: ", event)
-
   }
 
   async rtcSend(peerId: string, data: any){
