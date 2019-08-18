@@ -30,7 +30,7 @@ describe('Data', async() => {
 
       await client.connect()
       client.addListener('ws_open', ()=>{
-        client.requestConnection(client.peers[0])
+        client.requestConnection(client.peers[0].id)
       })
 
       client.addListener('on_dc_open', (peerId: string, event)=>{

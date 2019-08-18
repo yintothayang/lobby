@@ -9,6 +9,11 @@ export type ClientEventType = "ws_open" | "ws_error" | "ws_message" | "ws_close"
   | "connection_request" | "connection_accepted" | "on_ice_candidate" | "add_ice_candidate" | "set_remote_description"
   | "on_offer" | "on_dc_open" | "on_dc_message"
 
+function PeerNotFoundException(message: string){
+  this.message = message
+  this.name = "PeerNotFoundException"
+}
+
 export default class Client {
   url: string
   ws: any
@@ -40,9 +45,9 @@ export default class Client {
     return res
   }
 
-  async requestConnection(peer){
-    console.log("requestConnection: ", peer)
-    await this.send("connection_request", peer.id, {})
+  async requestConnection(peerId: string){
+    console.log("requestConnection: ", peerId)
+    await this.send("connection_request", peerId, {})
   }
 
   addListener(eventType: ClientEventType, listener: (message: any) => Promise<void>){
@@ -74,6 +79,7 @@ export default class Client {
         this.onEvent(data.eventType, data)
       } catch(e){
         console.error("ws_message Error: ", e)
+        console.log("current peers: ", this.peers)
       }
     })
   }
@@ -92,18 +98,20 @@ export default class Client {
     console.log("client.onConnectionRequest()", message)
     try {
       const p: Peer = new Peer(message.from, this.onEvent.bind(this))
-      this.peers.push(p)
-      p.connect(false)
+      await p.connect(false)
+      console.log("after p.connect: ", p.connection)
+      this.addPeer(p)
       await this.send("connection_accepted", message.from, {})
     } catch(e){
       console.error("ERROR: ", e)
+      console.log("current peers: ", this.peers)
     }
   }
 
   async onConnectionAccepted(message){
     console.log("client.onConnectionAccepted()", message)
     try {
-      const peer = this.peers.find(p => p.id == message.from)
+      const peer = this.getPeer(message.from)
       const offer = await peer.connect(true)
     } catch(e) {
       console.error("ERROR: ", e)
@@ -113,7 +121,8 @@ export default class Client {
   async setRemoteDescription(message){
     console.log("setRemoteDescription", message)
     try {
-      const peer = this.peers.find(p => p.id == message.from)
+      const peer = this.getPeer(message.from)
+      console.log("peer: ", peer)
       // @ts-ignore
       const description = new RTCSessionDescription()
       description.type = message.data.offer.type
@@ -127,13 +136,14 @@ export default class Client {
       }
     } catch(e){
       console.error("ERROR: ", e)
+
     }
   }
 
   async addIceCandidate(message){
     console.log("addIceCandidate", message)
     try {
-      const peer = this.peers.find(p => p.id == message.from)
+      const peer = this.getPeer(message.from)
       // @ts-ignore
       const candidate = new RTCIceCandidate(message.data.candidate)
       console.log("setting ice candidate: ", candidate)
@@ -166,7 +176,7 @@ export default class Client {
 
   async rtcSend(peerId: string, data: any){
     try {
-      const peer = this.peers.find(p => p.id === peerId)
+      const peer = this.getPeer(peerId)
       peer.connection.send(data)
     } catch(e){
       console.error("ERROR: ", e)
@@ -174,6 +184,29 @@ export default class Client {
     }
   }
 
+  getPeer(id: string){
+    const peer = this.peers.find(p => p.id === id)
+    if(peer === undefined){
+      console.log("peers: ", this.peers)
+      throw new PeerNotFoundException("Peer not found with id: " + id)
+    }
+    return peer
+  }
+
+  addPeer(peer: Peer){
+    console.log("add peer", peer)
+    try {
+      let oldPeer = this.getPeer(peer.id)
+      if(oldPeer){
+        this.peers.splice(this.peers.indexOf(oldPeer), 1)
+      }
+      this.peers.push(peer)
+
+      console.log("after add: ", this.peers)
+    } catch(e){
+      console.error(e)
+    }
+  }
 }
 
 
@@ -192,6 +225,8 @@ export class Peer {
 
   async connect(isHost=false){
     this.connection = new Connection(this.id, isHost, this.onEvent)
+    await this.connection.init()
+    console.log("waiting for connection")
     this.connection.pc.onicecandidate = (event)=> {
       this.onEvent("on_ice_candidate", this.id, event)
     }
@@ -214,12 +249,14 @@ export class Connection {
     this.to = to
     this.isHost = isHost
     this.onEvent = onEvent
+  }
 
+  async init(){
     // @ts-ignore
     this.pc = new RTCPeerConnection(null)
     this.pc.ondatachannel = this.ondatachannel.bind(this)
 
-    if(isHost){
+    if(this.isHost){
       this.dc = this.pc.createDataChannel(this.to)
       this.dc.onopen = this.onopen.bind(this)
       this.dc.onclose = this.onclose.bind(this)

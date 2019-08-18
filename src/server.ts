@@ -50,7 +50,7 @@ export const connect = async (event, context, callback) => {
   try {
     await DB.createPeer(id)
     const response = {
-      statusCode: 200,
+      statusCode: 201,
       body: "OK"
     }
     callback(null, response)
