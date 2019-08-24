@@ -2,11 +2,13 @@ import Client from '../../dist/client.js'
 
 const url = "wss://bamk6ty9r9.execute-api.us-west-2.amazonaws.com/dev"
 const client = new Client(url, true)
+let pointer = {x: 0, y: 0}
 
 const connectToPeer = (id: string, event: any)=>{
   console.log("connecting to:  ", id)
   console.log("this: ", event)
   client.requestConnection(id)
+
 }
 
 const connectToLobby = async()=>{
@@ -42,11 +44,7 @@ window.onload = async() => {
   button.onclick = connectToLobby
   document.body.appendChild(button)
 
-
   client.addListener('ws_open', async(e)=>{
-    console.log("ws opened", e)
-
-
     setInterval(async()=>{
       let peers = await client.getPeers()
       const list = document.getElementById("peerList")
@@ -59,4 +57,32 @@ window.onload = async() => {
     }, 500)
   })
 
+  document.onmousemove = (event)=> {
+    pointer.x = event.x
+    pointer.y = event.y
+  }
+
+  client.addListener('on_dc_open', (peerId: string, e)=>{
+    console.log("on_dc_open", e)
+    setInterval(()=>{
+      client.rtcSend(peerId, JSON.stringify(pointer))
+    })
+  })
+
+  client.addListener('on_dc_message', (peerId: string, e)=>{
+    console.log("on_dc_message", e)
+    let square = document.getElementById(peerId)
+    console.log("square", square)
+    if(!square){
+      square = document.createElement("div")
+      square.className = "square"
+      square.id = peerId
+      document.body.appendChild(square)
+    }
+
+    let pointer = JSON.parse(e.data)
+    square.style.left = pointer.x + "px"
+    square.style.top = pointer.y + "px"
+
+  })
 }

@@ -41,7 +41,7 @@ export default class Client {
   async getPeers(){
     // @ts-ignore
     const res = await fetch("https://7pd7gfpem8.execute-api.us-west-2.amazonaws.com/dev/peers").then(data => data.json())
-    this.peers = res.map(result => new Peer(result.id, this.onEvent.bind(this), result.name))
+    // this.peers = res.map(result => new Peer(result.id, this.onEvent.bind(this), result.name))
     return res
   }
 
@@ -98,9 +98,9 @@ export default class Client {
     console.log("client.onConnectionRequest()", message)
     try {
       const p: Peer = new Peer(message.from, this.onEvent.bind(this))
+      this.addPeer(p)
       await p.connect(false)
       console.log("after p.connect: ", p.connection)
-      this.addPeer(p)
       await this.send("connection_accepted", message.from, {})
     } catch(e){
       console.error("ERROR: ", e)
@@ -110,12 +110,9 @@ export default class Client {
 
   async onConnectionAccepted(message){
     console.log("client.onConnectionAccepted()", message)
-    try {
-      const peer = this.getPeer(message.from)
-      const offer = await peer.connect(true)
-    } catch(e) {
-      console.error("ERROR: ", e)
-    }
+    const peer: Peer = new Peer(message.from, this.onEvent.bind(this))
+    this.addPeer(peer)
+    const offer = await peer.connect(true)
   }
 
   async setRemoteDescription(message){
@@ -195,17 +192,7 @@ export default class Client {
 
   addPeer(peer: Peer){
     console.log("add peer", peer)
-    try {
-      let oldPeer = this.getPeer(peer.id)
-      if(oldPeer){
-        this.peers.splice(this.peers.indexOf(oldPeer), 1)
-      }
-      this.peers.push(peer)
-
-      console.log("after add: ", this.peers)
-    } catch(e){
-      console.error(e)
-    }
+    this.peers.push(peer)
   }
 }
 
