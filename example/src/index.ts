@@ -8,7 +8,6 @@ const connectToPeer = (id: string, event: any)=>{
   console.log("connecting to:  ", id)
   console.log("this: ", event)
   client.requestConnection(id)
-
 }
 
 const connectToLobby = async()=>{
@@ -70,9 +69,8 @@ window.onload = async() => {
   })
 
   client.addListener('on_dc_message', (peerId: string, e)=>{
-    console.log("on_dc_message", e)
+    // console.log("on_dc_message", e)
     let square = document.getElementById(peerId)
-    console.log("square", square)
     if(!square){
       square = document.createElement("div")
       square.className = "square"

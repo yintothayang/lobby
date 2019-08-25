@@ -46,7 +46,6 @@ export default class Client {
   }
 
   async requestConnection(peerId: string){
-    console.log("requestConnection: ", peerId)
     await this.send("connection_request", peerId, {})
   }
 
@@ -73,19 +72,16 @@ export default class Client {
     this.ws.addEventListener('error', (event)=>{this.onEvent("ws_error", event)})
     this.ws.addEventListener('message', (event)=>{this.onEvent("ws_message", event)})
     this.ws.addEventListener('message', (message: WSMessage)=>{
-      console.log("message: ", message)
       const data = JSON.parse(message.data)
       try {
         this.onEvent(data.eventType, data)
       } catch(e){
         console.error("ws_message Error: ", e)
-        console.log("current peers: ", this.peers)
       }
     })
   }
 
   async send(eventType: ClientEventType, to, data){
-    console.log("send: ", eventType)
     await this.ws.send(JSON.stringify({
       eventType,
       to,
@@ -95,31 +91,26 @@ export default class Client {
 
   // A new Peer wants to connect
   async onConnectionRequest(message){
-    console.log("client.onConnectionRequest()", message)
     try {
       const p: Peer = new Peer(message.from, this.onEvent.bind(this))
       this.addPeer(p)
       await p.connect(false)
-      console.log("after p.connect: ", p.connection)
       await this.send("connection_accepted", message.from, {})
     } catch(e){
       console.error("ERROR: ", e)
-      console.log("current peers: ", this.peers)
     }
   }
 
   async onConnectionAccepted(message){
-    console.log("client.onConnectionAccepted()", message)
     const peer: Peer = new Peer(message.from, this.onEvent.bind(this))
     this.addPeer(peer)
     const offer = await peer.connect(true)
   }
 
   async setRemoteDescription(message){
-    console.log("setRemoteDescription", message)
     try {
       const peer = this.getPeer(message.from)
-      console.log("peer: ", peer)
+
       // @ts-ignore
       const description = new RTCSessionDescription()
       description.type = message.data.offer.type
@@ -138,12 +129,10 @@ export default class Client {
   }
 
   async addIceCandidate(message){
-    console.log("addIceCandidate", message)
     try {
       const peer = this.getPeer(message.from)
       // @ts-ignore
       const candidate = new RTCIceCandidate(message.data.candidate)
-      console.log("setting ice candidate: ", candidate)
       await peer.connection.addIceCandidate(candidate)
     } catch(e){
       console.error("ERROR: ", e)
@@ -152,7 +141,6 @@ export default class Client {
   }
 
   async onIceCandidate(id, e){
-    console.log("onIceCandidate: ", e)
     if(e && e.candidate){
       const candidate = e.candidate.toJSON()
       this.send("add_ice_candidate", id, {candidate})
@@ -164,11 +152,11 @@ export default class Client {
   }
 
   async onDCOpen(peerId: string, event){
-    console.log("onDCOpen: ", event)
+    // console.log("onDCOpen: ", event)
 
   }
   async onDCMessage(peerId: string, event){
-    console.log("onDCMessage: ", event)
+    // console.log("onDCMessage: ", event)
   }
 
   async rtcSend(peerId: string, data: any){
@@ -184,14 +172,13 @@ export default class Client {
   getPeer(id: string){
     const peer = this.peers.find(p => p.id === id)
     if(peer === undefined){
-      console.log("peers: ", this.peers)
       throw new PeerNotFoundException("Peer not found with id: " + id)
     }
     return peer
   }
 
   addPeer(peer: Peer){
-    console.log("add peer", peer)
+    // console.log("add peer", peer)
     this.peers.push(peer)
   }
 }
@@ -213,7 +200,6 @@ export class Peer {
   async connect(isHost=false){
     this.connection = new Connection(this.id, isHost, this.onEvent)
     await this.connection.init()
-    console.log("waiting for connection")
     this.connection.pc.onicecandidate = (event)=> {
       this.onEvent("on_ice_candidate", this.id, event)
     }
@@ -247,12 +233,13 @@ export class Connection {
       this.dc = this.pc.createDataChannel(this.to)
       this.dc.onopen = this.onopen.bind(this)
       this.dc.onclose = this.onclose.bind(this)
+      this.dc.onmessage = this.onmessage.bind(this)
     }
   }
 
   // pc events
   ondatachannel(e){
-    console.log("ondatachannel(): to", this.to)
+    // console.log("ondatachannel(): to", this.to)
 
     if(!this.isHost){
       this.dc = e.channel
